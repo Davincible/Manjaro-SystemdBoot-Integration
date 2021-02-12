@@ -1,0 +1,66 @@
+#!/bin/bash -e
+
+package=0
+os_release=$(lsb_release -i | sed "s/.*:\s//")
+esp=$(bootctl -p)
+
+process_preset() {
+    if [[ -n "${pkgbase}" && -e $preset ]]; then
+        if ! cmp $preset > /dev/null 2>&1 <(sed "s|%PKGBASE%|${pkgbase}|g" /usr/share/mkinitcpio/hook.preset); then
+            if [[ ! -e $preset.pacsave ]]; then
+                # save the preset as pacsave
+                mv $preset $preset.pacsave && return 0
+            fi
+        else
+            # remove the preset
+            rm $preset && return 0
+        fi
+    fi
+}
+
+while read -r line; do
+    if [[ $line != */vmlinuz ]]; then
+        # triggers when it's a change to usr/lib/initcpio/*
+        package=1
+        continue
+    fi
+
+    if ! read -r pkgbase > /dev/null 2>&1 < "${line%/vmlinuz}/pkgbase"; then
+        # if the kernel has no pkgbase, we skip it
+        continue
+    fi
+
+    if ! read -r kernelbase > /dev/null 2>&1 < "${line%/vmlinuz}/kernelbase"; then
+        # this kernel has no kernelbase, use pkgbase
+        kernelbase="${pkgbase}"
+    fi
+
+    # remove the actual kernel and images for the package being removed
+    preset="/etc/mkinitcpio.d/${pkgbase}.preset"
+
+    # find all kernel locations, such as /boot/ and /<esp>/EFI/ManjaroLinux-<UUID>/
+    while read -r kernel; do
+        # as there could be multiple distros installed in EFI, validate that it is the current os
+        [[ $kernel =~ ^"${esp}/EFI" ]] && { ! echo $kernel | grep -iq "${os_release}"; } && continue
+        [[ -e $kernel ]] && rm $kernel
+
+    done < <(find "/boot" -type f -name "vmlinuz-${kernelbase}*")
+
+    while read -r initramfile; do
+        # as there could be multiple distros installed in EFI, validate that it is the current os
+        [[ $kernel =~ ^"${esp}/EFI" ]] && { ! echo $kernel | grep -iq "${os_release}"; } && continue
+        [[ -e $initramfile ]] && rm $initramfile
+
+    done < <(find "/boot" -type f -name "initramfs-${kernelbase}*")
+    process_preset "${pkgbase}" $preset
+done
+
+if (( package )) && compgen -G /etc/mkinitcpio.d/"*.preset" > /dev/null; then
+    shopt -s nullglob
+    for preset in /etc/mkinitcpio.d/*.preset; do
+        pkgbase=${preset##*/}
+        pkgbase=${pkgbase%.preset}
+        process_preset "${pkgbase}" $preset
+    done
+    shopt -u nullglob
+fi

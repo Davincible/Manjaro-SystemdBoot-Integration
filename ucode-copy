@@ -1,0 +1,11 @@
+#!/bin/bash -e
+
+distributor_id=$(lsb_release -i | sed "s/.*:\s//")
+root_uuid=$(findmnt -no UUID '/')
+esp_path=$(bootctl -p)
+
+install_path="${esp_path}/EFI/${distributor_id}-${root_uuid}/"
+
+[[ -e /boot/intel-ucode.img ]] && cp -f /boot/intel-ucode.img $install_path
+[[ -e /boot/amd-ucode.img ]] && cp -f /boot/amd-ucode.img $install_path
+

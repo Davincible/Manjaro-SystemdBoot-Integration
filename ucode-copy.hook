@@ -1,0 +1,11 @@
+[Trigger]
+Type = Path
+Operation = Install
+Operation = Upgrade
+Target = boot/intel-ucode.img
+Target = boot/amd-ucode.img
+
+[Action]
+Description = Copying ucode.img files to boot location
+When = PostTransaction
+Exec = /etc/pacman.d/scripts/ucode-copy

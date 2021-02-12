@@ -1,0 +1,16 @@
+[Trigger]
+Operation = Remove
+Type = Path
+Target = usr/lib/modules/*/vmlinuz
+
+[Trigger]
+Operation = Remove
+Type = Package
+Target = mkinitcpio
+Target = mkinitcpio-git
+
+[Action]
+Description = Removing linux initcpios...
+When = PreTransaction
+Exec = /etc/pacman.d/scripts/mkinitcpio-remove
+NeedsTargets
