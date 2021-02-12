@@ -55,7 +55,7 @@ export  LINUX_OPTIONS \
         REMOVE_EXISTING="yes" \
         OVERWRITE_EXISTING \
         REMOVE_OBSOLETE="yes" \
-        PRESERVE_FOREIGN="yes" \
+        PRESERVE_FOREIGN \
         NO_AUTOGEN \
         NO_AUTOUPDATE \
         CDISCARD \
@@ -187,7 +187,7 @@ generate_entries() {
             ucode=""
             while read -r ucodefile; do
                 # if located in EFI, make sure to grab the Manjaro version
-                [[ $ucodefile =~ ^"${ESP}/EFI/" ]] && { ! echo "${ucodefile}" | grep -iq "${ENTRY_ROOT}"; } && continue
+                [[ $ucodefile =~ ^"${esp}/EFI/" ]] && { ! echo "${ucodefile}" | grep -iq "${ENTRY_ROOT}"; } && continue
                 ucode="${ucode}initrd\t${ucodefile}\n"
             done < <(find "${ESP}" -maxdepth 4 -type f -iname "*ucode.img" -printf "/%P\n")
 
@@ -204,7 +204,7 @@ generate_entries() {
                 arch=$(basename -- "${kernel}" | awk -F- '{print $3}')
 
                 # if installed in EFI, where multiple distro's can reside, check if distro is Manjaro, if not continue
-                [[ $kernel =~ ^"${ESP}/EFI/" ]] && { ! echo "${kernel}" | grep -iq "${ENTRY_ROOT}"; } && continue
+                [[ $kernel =~ ^"${esp}/EFI/" ]] && { ! echo "${kernel}" | grep -iq "${ENTRY_ROOT}"; } && continue
 
                 # first validate we don't already have an entry for this kernel
                 [[ ${OVERWRITE_EXISTING,,} != "yes" && -f $(get_entry_root "$ESP" "$kernelnum")${kernelnum}.conf ]] && continue
@@ -252,6 +252,8 @@ remove_orphan_entries() {
     # find and remove all the entries with unmatched kernels
     for kernel in $(comm -13 <(find "${ESP}" -maxdepth 4 -type f -name "${KERNEL_PATTERN}" -printf "/%P\n" | uniq | sort) <(cat "${ESP}"/loader/entries/* | grep -i "^linux" | awk '{print $2}' | uniq | sort)); do
         while read -r entry; do
+            # If entry belongs to another distro, don't remove it
+            { ! echo "${entry}" | grep -iq "${ENTRY_ROOT}"; } && continue
             remove_entry "${entry}"
         done < <(grep -l "${kernel}" "${ESP}"/loader/entries/*)
     done
