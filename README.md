@@ -1,4 +1,4 @@
-# Manjaro-SystemdBoot-Integration
+# Manjaro better systemd-boot integration
 A more robust integration with systemd-boot, allowing for installation in `/boot`, `/efi` or `/boot/efi`
 
 The default hooks of Manjaro are adament about installing all kernel images in `/boot`, but when your bootloader is installed in another location this gives rise to issues, as the boot entries then can't access the images.
