@@ -8,3 +8,4 @@ To resolve this the default hooks have been amended to to adhere to [Boot Loader
 Futhermore, the sdboot-manage utility was also not created to deal with this scenario, so an amended one has been added here.
 
 An install script has been added to copy the custom hooks over to `/etc/pacman.d/hooks` & `/etc/pacman.d/scripts`.
+To install run `sudo ./install.sh`.
