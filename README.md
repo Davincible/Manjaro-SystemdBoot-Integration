@@ -6,3 +6,5 @@ The default hooks of Manjaro are adament about installing all kernel images in `
 To resolve this the default hooks have been amended to to adhere to [Boot Loader Specification](https://systemd.io/BOOT_LOADER_SPECIFICATION/) created by Systemd, which specifies that in order to create a healthy ecosystem for multiboot, it is best to install kernel images under <bootloader dir>/EFI/<distro>-<UUID>. This has been implemented in the hooks and their respective scripts in this repo. 
   
 Futhermore, the sdboot-manage utility was also not created to deal with this scenario, so an amended one has been added here.
+
+An install script has been added to copy the custom hooks over to `/etc/pacman.d/hooks` & `/etc/pacman.d/scripts`.
