@@ -71,11 +71,6 @@ get_entry_root() {
     fi
 }
 
-# removes a systemd-boot entry
-remove_entry() {
-    [[ ${1} =~ ^$(get_entry_root "${ESP}").* || ${PRESERVE_FOREIGN} != "yes" ]] && rm "$1"
-}
-
 # installs and configures systemd-boot
 setup_sdboot() {
     if bootctl status &> /dev/null; then
@@ -203,8 +198,8 @@ generate_entries() {
                 kernelnum=$(basename -- "${kernel}" | awk -F- '{print $2}')
                 arch=$(basename -- "${kernel}" | awk -F- '{print $3}')
 
-                # if installed in EFI, where multiple distro's can reside, check if distro is Manjaro, if not continue
-                [[ $kernel =~ ^"${ESP}/EFI/" ]] && { ! echo "${kernel}" | grep -iq "${ENTRY_ROOT}"; } && continue
+                # if installed in EFI, where multiple distro's can reside, check if distro it is the current running distro by checking against root uuid
+                [[ $kernel =~ ^"${ESP}/EFI/" ]] && { ! echo "${kernel}" | grep -iq "${srcdev_uuid}"; } && continue
 
                 # first validate we don't already have an entry for this kernel
                 [[ ${OVERWRITE_EXISTING,,} != "yes" && -f $(get_entry_root "$ESP" "$kernelnum")${kernelnum}.conf ]] && continue
@@ -249,11 +244,20 @@ generate_entries() {
 remove_orphan_entries() {
     [[ ${REMOVE_OBSOLETE,,} != "yes" ]] && return
 
-    # find and remove all the entries with unmatched kernels
-    for kernel in $(comm -13 <(find "${ESP}" -maxdepth 4 -type f -name "${KERNEL_PATTERN}" -printf "/%P\n" | uniq | sort) <(cat "${ESP}"/loader/entries/* | grep -i "^linux" | awk '{print $2}' | uniq | sort)); do
-        while read -r entry; do
-            remove_entry "${entry}"
-        done < <(grep -l "${kernel}" "${ESP}"/loader/entries/*)
+    entries_dir="${ESP}/loader/entries"
+    old_name_entries=$(find "${entries_dir}"/*.conf -name "${ENTRY_ROOT}*" -exec grep -i "^linux" "{}" \; | \
+        awk '{print $2}' | sort -u |  xargs -d "\n" -I{} grep -l "{}" "${entries_dir}"/*.conf | grep -v "${ENTRY_ROOT}")
+
+    old_kernel_entries=$(find "${entries_dir}"/*.conf  -exec grep -i "^linux" "{}" \; | awk -vesp="${ESP}" '{print esp $2}' |\
+        xargs -d "\n" -I{} bash -c '[ -e {} ] || basename -- {}' | grep -lf - "${entries_dir}"/*.conf)
+
+    foreign_entries=$(find "${entries_dir}"/*.conf | grep -v "${ENTRY_ROOT}")
+
+    entries="${old_name_entries}\n${old_kernel_entries}"
+    [[ ${PRESERVE_FOREIGN} != "yes" ]] && entries="${entries}\n${foreign_entries}"
+
+    for entry in $(echo -e $entries | sort -u); do
+        rm $entry
     done
 }
 
