@@ -80,3 +80,7 @@ fi
 
 echo "Hooks and scripts installed successfully!"
 
+if { read -n1 -p "Do you want to reinstall the kernel to the right location and create boot entries? [y/N]" install_kernel; [[ $install_kernel =~ ^[yY] ]]; }; then
+    pacman -Syu --noconfirm $(pacman -Qq | grep -E "^linux[0-9]{1,3}")
+fi
+
