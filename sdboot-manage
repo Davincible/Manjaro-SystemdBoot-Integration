@@ -51,6 +51,7 @@ export  LINUX_OPTIONS \
         ENTRY_ROOT="manjarolinux" \
         ENTRY_TITLE="Manjaro Linux" \
         ENTRY_APPEND_KVER="yes" \
+        HOSTNAME="$(cat /etc/hostname)" \
         KERNEL_PATTERN="vmlinuz-[0-9]*-*" \
         REMOVE_EXISTING="yes" \
         OVERWRITE_EXISTING \
@@ -69,6 +70,11 @@ get_entry_root() {
     if [[ ${ENTRY_APPEND_KVER,,} == "yes" ]]; then
         echo -n "$2"
     fi
+}
+
+# removes a systemd-boot entry
+remove_entry() {
+    [[ ${1} =~ ^$(get_entry_root "${ESP}").* || ${PRESERVE_FOREIGN} != "yes" ]] && rm "$1"
 }
 
 # installs and configures systemd-boot

@@ -1,2 +1,3 @@
 systemd-boot-manager/
 *.bak
+.vim/
