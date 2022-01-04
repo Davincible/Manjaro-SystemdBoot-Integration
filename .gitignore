@@ -1,3 +1,5 @@
 systemd-boot-manager/
 *.bak
 .vim/
+testing.sh
+testing/
