@@ -207,7 +207,8 @@ generate_entries() {
                 arch=$(basename -- "${kernel}" | awk -F- '{print $3}')
 
                 # if installed in EFI, where multiple distro's can reside, check if distro it is the current running distro by checking against root uuid
-                [[ $kernel =~ ^"${ESP}/EFI/" ]] && { ! echo "${kernel}" | grep -iq "${srcdev_uuid}"; } && continue
+                [[ $kernel =~ ^"/EFI/" ]] && { ! echo "${kernel}" | grep -iq "${srcdev_uuid}"; } && continue
+                echo "Continuing to use kernel: $kernel, srcdev_uuid: $srcdev_uuid"
 
                 # generate the files names to use for the entries
                 entry_fname="$(get_entry_root "$ESP" "$kernelnum")-$HOSTNAME_CLEAN.conf"

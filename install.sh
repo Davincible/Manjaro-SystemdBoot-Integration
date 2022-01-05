@@ -24,6 +24,15 @@ remove_hook_dest="${hooks_dir}/${remove_hook}"
 remove_script_dest="${scripts_dir}/${remove_script}"
 preset_dest="/usr/share/mkinitcpio/${preset}"
 
+all_flag=false
+while getopts :a:h flag
+do
+    case "${flag}" in
+        a) all_flag=true;;
+	h) echo "Install systemd scripts\nUse -a flag to accept all questions, and skip prompts";;
+    esac
+done
+
 # Check if pcman.d exists
 [[ -d $pacman_configd ]] || \
     { echo "Pacman config directory not found ($pacman_configd), are you sure you are using pacman?"; exit 1; }
@@ -31,14 +40,14 @@ preset_dest="/usr/share/mkinitcpio/${preset}"
 # Install hook
 # If file exists, ask to create backup, else just install
 if [[ -e $install_hook_dest ]] && \
-    { read -n1 -p "File ${install_hook_dest} exists, make makeup? [Y/n] " bk; echo; [[ $bk =~ ^[yY] ]]; }; then
+	([[ $all_flag == true ]] || { read -n1 -p "File ${install_hook_dest} exists, make makeup? [Y/n] " bk; echo; [[ $bk =~ ^[yY] ]]; }); then
     install -Dbm644 $install_hook $install_hook_dest
 else
     install -Dm644 $install_hook $install_hook_dest
 fi
 
 if [[ -e $install_script_dest ]] && \
-    { read -n1 -p "File ${install_script_dest} exists, make makeup? [Y/n] " bk; echo; [[ $bk =~ ^[yY] ]]; }; then
+	([[ $all_flag == true ]] || { read -n1 -p "File ${install_script_dest} exists, make makeup? [Y/n] " bk; echo; [[ $bk =~ ^[yY] ]]; }); then
     install -Dbm755 $install_hook $install_hook_dest
 else
     install -Dm755 $install_script $install_script_dest
@@ -46,14 +55,14 @@ fi
 
 # Remove hook
 if [[ -e $remove_hook_dest ]] && \
-    { read -n1 -p "File ${remove_hook_dest} exists, make makeup? [Y/n] " bk; echo; [[ $bk =~ ^[yY] ]]; }; then
+	([[ $all_flag == true ]] || { read -n1 -p "File ${remove_hook_dest} exists, make makeup? [Y/n] " bk; echo; [[ $bk =~ ^[yY] ]]; }); then
     install -Dbm644 $remove_hook $remove_hook_dest
 else
     install -Dm644 $remove_hook $remove_hook_dest
 fi
 
 if [[ -e $remove_script_dest ]] && \
-    { read -n1 -p "File ${remove_script_dest} exists, make makeup? [Y/n] " bk; echo; [[ $bk =~ ^[yY] ]]; }; then
+	([[ $all_flag == true ]] || { read -n1 -p "File ${remove_script_dest} exists, make makeup? [Y/n] " bk; echo; [[ $bk =~ ^[yY] ]]; }); then
     install -Dbm755 $remove_script $remove_script_dest
 else
     install -Dm755 $remove_script $remove_script_dest
@@ -70,7 +79,7 @@ else
 fi
 
 # Install sdboot-manage
-if { read -n1 -p "Do you want to install the custom sdboot-manage? [y/N]" sdboot_install; echo; [[ $sdboot_install =~ ^[yY] ]]; }; then
+if [[ $all_flag == true ]] || { read -n1 -p "Do you want to install the custom sdboot-manage? [y/N]" sdboot_install; echo; [[ $sdboot_install =~ ^[yY] ]]; }; then
     if grep -q "CUSTOM" /usr/bin/sdboot-manage; then
         install -Dm755 sdboot-manage /usr/bin/sdboot-manage
     else
@@ -78,9 +87,11 @@ if { read -n1 -p "Do you want to install the custom sdboot-manage? [y/N]" sdboot
     fi
 fi
 
+rm -rf /etc/mkinitcpio.d/*.preset
+
 echo "Hooks and scripts installed successfully!"
 
-if { read -n1 -p "Do you want to reinstall the kernel to the right location and create boot entries? [y/N]" install_kernel; [[ $install_kernel =~ ^[yY] ]]; }; then
+if [[ $all_flag == true ]] || { read -n1 -p "Do you want to reinstall the kernel to the right location and create boot entries? [y/N]" install_kernel; [[ $install_kernel =~ ^[yY] ]]; }; then
     pacman -Syu --noconfirm $(pacman -Qq | grep -E "^linux[0-9]{1,3}")
 fi
 
