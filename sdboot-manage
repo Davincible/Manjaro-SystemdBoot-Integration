@@ -55,7 +55,7 @@ export  LINUX_OPTIONS \
         HOSTNAME="$(cat /etc/hostname)" \
         HOSTNAME_CLEAN="$(cat /etc/hostname | sed -e 's/[^A-Za-z0-9._-]/_/g')" \
         KERNEL_PATTERN="vmlinuz-[0-9]*-*" \
-        REMOVE_EXISTING="yes" \
+        REMOVE_EXISTING="no" \
         OVERWRITE_EXISTING \
         REMOVE_OBSOLETE="yes" \
         PRESERVE_FOREIGN="yes" \
@@ -235,6 +235,8 @@ generate_entries() {
                 echo "Error: There are no boot loader entries after entry generation"
                 exit 1
             fi
+
+	    remove_orphan_entries
 
             # set the default entry in loader.conf
             entryroot=$(get_entry_root "${ESP}")

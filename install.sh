@@ -48,7 +48,7 @@ fi
 
 if [[ -e $install_script_dest ]] && \
 	([[ $all_flag == true ]] || { read -n1 -p "File ${install_script_dest} exists, make makeup? [Y/n] " bk; echo; [[ $bk =~ ^[yY] ]]; }); then
-    install -Dbm755 $install_hook $install_hook_dest
+    install -Dbm755 $install_script $install_script_dest
 else
     install -Dm755 $install_script $install_script_dest
 fi
@@ -68,7 +68,8 @@ else
     install -Dm755 $remove_script $remove_script_dest
 fi
 
-$(install -D -m644 ucode-copy.hook "${hooks_dir}/ucode-copy.hook")
+# Ucode copy hook
+install -D -m644 ucode-copy.hook "${hooks_dir}/ucode-copy.hook"
 install -D -m755 ucode-copy "${scripts_dir}/ucode-copy"
 
 # Only backup if file original
